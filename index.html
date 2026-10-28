@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All-in-One Utility App</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f0f2f5;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+    color:#333;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    border-radius:10px;
+    padding:15px;
+    box-shadow:0 0 10px rgba(0,0,0,0.15);
+}
+
+h2{
+    margin-bottom:10px;
+    color:#444;
+}
+
+button{
+    padding:8px 15px;
+    border:none;
+    border-radius:5px;
+    background:#007bff;
+    color:white;
+    cursor:pointer;
+    margin:3px;
+}
+
+button:hover{
+    background:#0056b3;
+}
+
+input,textarea{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+
+#clock{
+    font-size:35px;
+    font-weight:bold;
+    color:green;
+    text-align:center;
+}
+
+#display{
+    text-align:right;
+    font-size:24px;
+    height:50px;
+}
+
+.calc{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:5px;
+}
+
+.calc button{
+    height:50px;
+    font-size:18px;
+}
+
+video{
+    width:100%;
+    border-radius:10px;
+}
+
+li{
+    background:#eee;
+    margin-top:5px;
+    padding:8px;
+    border-radius:5px;
+}
+</style>
+</head>
+<body>
+
+<h1>📱 All In One Daily Utility App</h1>
+
+<div class="container">
+
+<div class="card">
+<h2>🕒 Clock</h2>
+<div id="clock"></div>
+</div>
+
+<div class="card">
+<h2>🧮 Calculator</h2>
+
+<input id="display" readonly>
+
+<div class="calc">
+<button onclick="add('7')">7</button>
+<button onclick="add('8')">8</button>
+<button onclick="add('9')">9</button>
+<button onclick="add('/')">÷</button>
+
+<button onclick="add('4')">4</button>
+<button onclick="add('5')">5</button>
+<button onclick="add('6')">6</button>
+<button onclick="add('*')">×</button>
+
+<button onclick="add('1')">1</button>
+<button onclick="add('2')">2</button>
+<button onclick="add('3')">3</button>
+<button onclick="add('-')">-</button>
+
+<button onclick="add('0')">0</button>
+<button onclick="add('.')">.</button>
+<button onclick="equal()">=</button>
+<button onclick="add('+')">+</button>
+</div>
+
+<button onclick="clearCalc()">Clear</button>
+</div>
+
+<div class="card">
+<h2>📷 Camera</h2>
+<video id="video" autoplay playsinline></video>
+<br><br>
+<button onclick="startCamera()">Start Camera</button>
+</div>
+
+<div class="card">
+<h2>🎤 Voice Recorder</h2>
+
+<button onclick="startRecording()">Start Recording</button>
+<button onclick="stopRecording()">Stop Recording</button>
+
+<br><br>
+
+<audio id="player" controls></audio>
+</div>
+
+<div class="card">
+<h2>📝 Notes</h2>
+
+<textarea id="notes" rows="8"></textarea>
+<button onclick="saveNotes()">Save Notes</button>
+</div>
+
+<div class="card">
+<h2>✅ To-Do List</h2>
+
+<input id="task" placeholder="Enter task">
+
+<button onclick="addTask()">Add Task</button>
+
+<ul id="list"></ul>
+</div>
+
+</div>
+
+<script>
+
+/* CLOCK */
+
+function updateClock(){
+let now=new Date();
+document.getElementById("clock").innerHTML=
+now.toLocaleTimeString();
+}
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* CALCULATOR */
+
+function add(v){
+document.getElementById("display").value+=v;
+}
+
+function equal(){
+try{
+document.getElementById("display").value=
+eval(document.getElementById("display").value);
+}
+catch{
+alert("Invalid Input");
+}
+}
+
+function clearCalc(){
+document.getElementById("display").value="";
+}
+
+
+/* CAMERA */
+
+async function startCamera(){
+
+try{
+const stream =
+await navigator.mediaDevices.getUserMedia({
+video:true
+});
+
+document.getElementById("video").srcObject=
+stream;
+}
+catch(err){
+alert("Camera permission denied");
+}
+}
+
+
+/* VOICE RECORDER */
+
+let recorder;
+let chunks=[];
+
+async function startRecording(){
+
+const stream=
+await navigator.mediaDevices.getUserMedia({
+audio:true
+});
+
+recorder=new MediaRecorder(stream);
+
+chunks=[];
+
+recorder.ondataavailable=e=>{
+chunks.push(e.data);
+};
+
+recorder.onstop=()=>{
+
+const blob=
+new Blob(chunks,{type:'audio/webm'});
+
+const url=
+URL.createObjectURL(blob);
+
+document.getElementById("player").src=url;
+};
+
+recorder.start();
+}
+
+function stopRecording(){
+if(recorder){
+recorder.stop();
+}
+}
+
+
+/* NOTES */
+
+const noteBox=document.getElementById("notes");
+
+noteBox.value=
+localStorage.getItem("notes") || "";
+
+function saveNotes(){
+
+localStorage.setItem(
+"notes",
+noteBox.value
+);
+
+alert("Notes Saved");
+}
+
+
+/* TODO LIST */
+
+function addTask(){
+
+let value=
+document.getElementById("task").value;
+
+if(value.trim()=="") return;
+
+let li=document.createElement("li");
+
+li.innerHTML=value;
+
+document.getElementById("list")
+.appendChild(li);
+
+document.getElementById("task").value="";
+}
+
+</script>
+
+</body>
+</html>
